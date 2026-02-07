@@ -1,9 +1,7 @@
-from playwright.sync_api import sync_playwright 
 import time
 import random
 
-
-def collect_profiles_links(page, stored_profiles: set):
+def collect_profiles_links(page, stored_profiles: list):
     profile_cards_locator = page.locator("div[data-view-name='people-search-result']")
 
     no_new_profiles_rounds = 0
@@ -23,16 +21,17 @@ def collect_profiles_links(page, stored_profiles: set):
                 continue
 
             href = link.first.get_attribute("href")
+            if not href:
+                continue
 
-            if href and href not in stored_profiles:
-                if not any(p["url"] == href for p in stored_profiles):
-                    stored_profiles.append({
-                        "url": href,
-                        "status": "new"
-                    })
-                    print("➕ Новый профиль:", href)
-                else:
-                    print("⏭ Уже есть:", href)
+            # ✅ проверяем, есть ли уже такой url
+            exists = any(p["url"] == href for p in stored_profiles)
+
+            if not exists:
+                stored_profiles.append({
+                    "url": href,
+                    "status": "new"
+                })
                 print("➕ Новый профиль:", href)
                 time.sleep(random.uniform(0.3, 0.8))
             else:

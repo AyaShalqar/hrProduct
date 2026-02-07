@@ -1,0 +1,254 @@
+================================================================================
+LINKEDIN PROFILE HEADER - РУКОВОДСТВО ПО ПАРСИНГУ
+================================================================================
+
+ВАЖНО: Классы типа "QcmwTtiKfsKOTUzxpOjAXfNCWTJUabZIvkQ" - обфусцированные,
+они МЕНЯЮТСЯ! Используй только СТАБИЛЬНЫЕ классы и атрибуты.
+
+================================================================================
+1. ИМЯ ПРОФИЛЯ
+================================================================================
+Элемент:    <h1>
+Селектор:   h1
+Пример:     "Адилов Амир"
+
+СТАБИЛЬНЫЕ классы:
+- inline
+- t-24
+- v-align-middle
+- break-words
+
+Playwright: page.locator("h1").first.inner_text()
+
+================================================================================
+2. HEADLINE (Должность/Описание)
+================================================================================
+Элемент:    <div class="text-body-medium break-words">
+Селектор:   div.text-body-medium.break-words
+Пример:     "AI Delivery Lead at KOZ AI | KBTU 26' | n! 24'"
+
+СТАБИЛЬНЫЕ классы:
+- text-body-medium
+- break-words
+
+Атрибут:    data-generated-suggestion-target (уникальный идентификатор)
+
+Playwright: page.locator("div.text-body-medium.break-words").first.inner_text()
+
+================================================================================
+3. ФОТО ПРОФИЛЯ
+================================================================================
+Элемент:    <img> внутри <button>
+Контейнер:  button.pv-top-card-profile-picture__container
+
+СТАБИЛЬНЫЕ классы контейнера:
+- pv-top-card-profile-picture__container
+- pv-top-card__photo
+- EntityPhoto-circle-9
+
+Атрибуты img:
+- src       → URL фото (400x400)
+- title     → Имя человека
+- alt       → Имя человека
+- width/height = 200
+
+Playwright: page.locator("button.pv-top-card-profile-picture__container img").get_attribute("src")
+
+================================================================================
+4. УРОВЕНЬ СВЯЗИ (1-й, 2-й, 3-й контакт)
+================================================================================
+Элемент:    <span class="dist-value">
+Селектор:   span.dist-value
+Пример:     "2-й"
+
+СТАБИЛЬНЫЕ классы:
+- dist-value
+- distance-badge (родитель)
+
+Скрытый текст: span.visually-hidden содержит "контакт 2-го уровня"
+
+Playwright: page.locator("span.dist-value").inner_text()
+
+================================================================================
+5. ВЕРИФИКАЦИЯ (Синяя галочка)
+================================================================================
+Элемент:    <svg data-test-icon="verified-medium">
+Селектор:   svg[data-test-icon="verified-medium"]
+
+СТАБИЛЬНЫЕ атрибуты:
+- data-test-icon="verified-medium"
+- class содержит "pv-text-details__verified-badge-icon"
+
+Playwright: page.locator("svg[data-test-icon='verified-medium']").count() > 0
+
+================================================================================
+6. ТЕКУЩАЯ КОМПАНИЯ
+================================================================================
+Элемент:    Первый <li> в списке компания/образование
+Контейнер:  <button> с aria-label начинающимся на "Текущая компания:"
+
+СТАБИЛЬНЫЕ признаки:
+- aria-label кнопки содержит "Текущая компания:"
+- Текст компании в <div> с классом inline-show-more-text
+- Логотип в <img> с классом EntityPhoto-square-1
+
+Атрибуты button:
+- aria-label = "Текущая компания: KOZ AI. Нажмите..."
+
+Playwright:
+  button = page.locator("button[aria-label^='Текущая компания']")
+  company = button.locator("div").inner_text()
+  logo = button.locator("img").get_attribute("src")
+
+================================================================================
+7. ОБРАЗОВАНИЕ
+================================================================================
+Элемент:    Второй <li> в списке компания/образование
+Контейнер:  <button> с aria-label начинающимся на "Образование:"
+
+СТАБИЛЬНЫЕ признаки:
+- aria-label кнопки содержит "Образование:"
+- Структура аналогична компании
+
+Атрибуты button:
+- aria-label = "Образование: Kazakh-British Technical University..."
+
+Playwright:
+  button = page.locator("button[aria-label^='Образование']")
+  education = button.locator("div").inner_text()
+  logo = button.locator("img").get_attribute("src")
+
+================================================================================
+8. ЛОКАЦИЯ
+================================================================================
+Элемент:    <span class="text-body-small inline t-black--light break-words">
+Пример:     "Алматы, Алматы, Казахстан"
+
+СТАБИЛЬНЫЕ классы:
+- text-body-small
+- inline
+- t-black--light
+- break-words
+
+ВАЖНО: Не путать с ссылкой "Контактные сведения" (она в <a> теге)
+
+Playwright: page.locator("span.text-body-small.inline.t-black--light.break-words").inner_text()
+
+================================================================================
+9. КОЛИЧЕСТВО КОНТАКТОВ
+================================================================================
+Элемент:    <span class="t-bold"> внутри <li class="text-body-small">
+Пример:     "500+"
+
+СТАБИЛЬНЫЕ классы:
+- t-bold (число)
+- text-body-small (контейнер li)
+
+Текст после числа: " контактов"
+
+Playwright: page.locator("li.text-body-small span.t-bold").inner_text()
+
+================================================================================
+10. ОБЩИЕ КОНТАКТЫ
+================================================================================
+Элемент:    <a> с href содержащим "facetConnectionOf"
+Имена:      <strong> теги внутри ссылки
+
+СТАБИЛЬНЫЕ признаки:
+- href содержит "facetConnectionOf"
+- href содержит "facetNetwork"
+- Имена в тегах <strong>
+
+Атрибуты a:
+- data-test-app-aware-link=""
+- href с параметрами facetConnectionOf и facetNetwork
+
+Фото общих контактов:
+- <img> внутри ul.ivm-image-view-model__img-list--stacked
+- Класс: EntityPhoto-circle-1-stackedFacepile
+
+Playwright:
+  link = page.locator("a[href*='facetConnectionOf']")
+  names = link.locator("strong").all_inner_texts()
+
+================================================================================
+11. ССЫЛКА НА КОНТАКТНЫЕ ДАННЫЕ
+================================================================================
+Элемент:    <a id="top-card-text-details-contact-info">
+Селектор:   a#top-card-text-details-contact-info
+
+СТАБИЛЬНЫЕ признаки:
+- id="top-card-text-details-contact-info"
+- href содержит "/overlay/contact-info/"
+
+Playwright: page.locator("#top-card-text-details-contact-info").get_attribute("href")
+
+================================================================================
+12. КНОПКА "ДОБАВИТЬ В КОНТАКТЫ"
+================================================================================
+Элемент:    <button> с aria-label содержащим "Пригласить"
+
+СТАБИЛЬНЫЕ признаки:
+- aria-label содержит "Пригласить" и "установить контакт"
+- class содержит "artdeco-button--primary"
+- data-test-icon="connect-small" на иконке внутри
+
+Playwright: page.locator("button[aria-label*='Пригласить'][aria-label*='контакт']")
+
+================================================================================
+13. КНОПКА "ОТПРАВИТЬ СООБЩЕНИЕ"
+================================================================================
+Элемент:    <button> с aria-label содержащим "Отправить сообщение"
+
+СТАБИЛЬНЫЕ признаки:
+- aria-label содержит "Отправить сообщение"
+- class содержит "artdeco-button--secondary"
+
+Playwright: page.locator("button[aria-label*='Отправить сообщение']")
+
+================================================================================
+СТРУКТУРА КОНТЕЙНЕРОВ (для навигации)
+================================================================================
+
+ГЛАВНЫЙ КОНТЕЙНЕР:
+  div.ph5.pb5
+    └── div.mt2.relative          (основной блок с данными)
+        ├── h1                    (имя)
+        ├── svg[verified]         (галочка)
+        ├── span.dist-value       (уровень связи)
+        ├── div.text-body-medium  (headline)
+        ├── ul                    (компания + образование)
+        │   ├── li (button)       (компания)
+        │   └── li (button)       (образование)
+        └── div.mt2               (локация + контакты)
+            └── span              (локация)
+
+================================================================================
+РЕКОМЕНДАЦИИ ДЛЯ ДИНАМИЧЕСКОГО ПАРСИНГА
+================================================================================
+
+1. ИСПОЛЬЗУЙ aria-label - они стабильны и содержат полезные данные:
+   - "Текущая компания: KOZ AI"
+   - "Образование: Kazakh-British Technical University"
+   - "Пригласить участника Адилов Амир установить контакт"
+
+2. ИСПОЛЬЗУЙ data-test-* атрибуты:
+   - data-test-icon="verified-medium"
+   - data-test-app-aware-link
+
+3. ИСПОЛЬЗУЙ id где возможно:
+   - #top-card-text-details-contact-info
+
+4. ИСПОЛЬЗУЙ стабильные классы:
+   - text-body-medium, text-body-small
+   - t-bold, t-black--light
+   - dist-value
+   - pv-top-card-profile-picture__container
+   - EntityPhoto-square-1, EntityPhoto-circle-9
+
+5. ИЗБЕГАЙ обфусцированных классов (рандомные буквы):
+   - QcmwTtiKfsKOTUzxpOjAXfNCWTJUabZIvkQ
+   - FRFzzuosWdAfipCkGLqNnAPfyYuhnnKfwtAy
+   - Они меняются при каждом деплое LinkedIn!
+
+================================================================================
