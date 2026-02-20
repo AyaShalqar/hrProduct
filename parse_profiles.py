@@ -1,99 +1,144 @@
-from playwright.sync_api import sync_playwright
+import json
+import os
 import time
 import random
-from storage import load_profiles, save_profiles
+from playwright.sync_api import sync_playwright
+from PIL import Image
 
-def parse_profiles(page, url: str):
-    page.goto(url, wait_until="domcontentloaded")
-    page.wait_for_timeout(random.uniform(2500, 4000))
-
-    # ⛔ логин / ограничения
-    if page.locator("input[name='session_key']").count() > 0:
-        raise Exception("Not logged in")
-
-    if "checkpoint" in page.url:
-        raise Exception("Checkpoint / restricted")
-
-    # 🔽 ОБЯЗАТЕЛЬНЫЙ СКРОЛЛ
-    page.mouse.wheel(0, 600)
-    page.wait_for_timeout(random.uniform(800, 1200))
-
-    # ждём main, а не h1
-    page.wait_for_selector("main", timeout=15000)
-    main = page.locator("main")
-
-    data = {"url": url}
-
-    # ✅ NAME
-    try:
-        data["name"] = main.locator("h1").first.inner_text().strip()
-    except:
-        data["name"] = None
-
-    # ✅ HEADLINE
-    try:
-        data["headline"] = main.locator("div.text-body-medium").first.inner_text().strip()
-    except:
-        data["headline"] = None
-
-    # ✅ LOCATION
-    location = None
-    try:
-        smalls = main.locator("span.text-body-small")
-        for i in range(min(smalls.count(), 10)):
-            txt = smalls.nth(i).inner_text().strip()
-            low = txt.lower()
-
-            if not txt:
-                continue
-            if "контакт" in low or "connections" in low or "уров" in low:
-                continue
-            if "," in txt or len(txt) > 4:
-                location = txt
-                break
-    except:
-        pass
-
-    data["location"] = location
-
-    return data
+SCREENSHOTS_DIR = "screenshots"
+os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
 
 
+def wait_full_load(page):
+    page.wait_for_load_state("domcontentloaded")
+    page.wait_for_load_state("networkidle")
+    time.sleep(3)
 
 
+def scroll_until_loaded(page, max_attempts=20):
+    """Скроллит до полной подгрузки LinkedIn"""
+    last_height = 0
+    attempts = 0
 
-def main():
-    profiles = load_profiles()  
-    print(f"📦 Загружено профилей из JSON: {len(profiles)}")
+    while attempts < max_attempts:
+        current_height = page.evaluate(
+            "document.scrollingElement.scrollHeight"
+        )
+
+        if current_height == last_height:
+            break
+
+        page.evaluate(
+            "window.scrollTo(0, document.scrollingElement.scrollHeight)"
+        )
+
+        time.sleep(random.uniform(2, 3))
+
+        last_height = current_height
+        attempts += 1
+
+
+def capture_by_viewport(page, profile_name):
+    screenshots = []
+
+    viewport_height = page.viewport_size["height"]
+    total_height = page.evaluate(
+        "document.scrollingElement.scrollHeight"
+    )
+
+    position = 0
+    index = 0
+
+    while position < total_height:
+        page.evaluate(f"window.scrollTo(0, {position})")
+        time.sleep(1)
+
+        path = f"{SCREENSHOTS_DIR}/{profile_name}_{index}.png"
+        page.screenshot(path=path)
+        screenshots.append(path)
+
+        position += viewport_height
+        index += 1
+
+    return screenshots
+
+
+def stitch_images(image_paths, output_path):
+    images = [Image.open(p) for p in image_paths]
+
+    total_height = sum(img.height for img in images)
+    max_width = max(img.width for img in images)
+
+    final_image = Image.new("RGB", (max_width, total_height))
+
+    y = 0
+    for img in images:
+        final_image.paste(img, (0, y))
+        y += img.height
+
+    final_image.save(output_path)
+
+    for p in image_paths:
+        os.remove(p)
+
+
+def process_profiles():
+    with open("profiles.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        context = browser.new_context(storage_state="storage_state.json")
+        browser = p.chromium.launch(
+            headless=False,
+            args=["--start-maximized"]
+        )
+
+        context = browser.new_context(
+            storage_state="storage_state.json",
+            viewport={"width": 1280, "height": 900}
+        )
+
         page = context.new_page()
 
-        for profile in profiles:
-            if profile["status"] != "new":
+        for profile in data["profiles"]:
+            if profile["status"] not in ["new", "error"]:
                 continue
-            url = profile["url"]
-            print(f"🔍 Парсим профиль: {url}")
 
-            try :
-                profile_data = parse_profiles(page, url)
-                profile["data"] = profile_data
-                profile["status"] = "parsed"
-                print(f"✅ Успешно спарсили: {url}")
+            try:
+                print("Processing:", profile["url"])
+
+                page.goto(profile["url"], timeout=60000)
+                wait_full_load(page)
+
+                # Проверка авторизации
+                if "login" in page.url:
+                    print("❌ Not authorized")
+                    profile["status"] = "error"
+                    continue
+
+                # Прогружаем lazy load
+                scroll_until_loaded(page)
+
+                profile_name = profile["url"].strip("/").split("/")[-1]
+
+                chunks = capture_by_viewport(page, profile_name)
+
+                final_path = f"{SCREENSHOTS_DIR}/{profile_name}_full.png"
+                stitch_images(chunks, final_path)
+
+                profile["status"] = "done"
+                print("✅ Done:", profile_name)
+
+                time.sleep(random.uniform(3, 6))
+
             except Exception as e:
+                print("❌ Error:", e)
                 profile["status"] = "error"
-                profile["error"] = str(e)
-                print(f"❌ Ошибка при парсинге {url}: {e}")
-                save_profiles(profiles)
-                continue
 
-            save_profiles(profiles)
-            time.sleep(random.uniform(5, 8))
-        
         browser.close()
+
+    with open("profiles.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
 
 if __name__ == "__main__":
-    main()
+    process_profiles()

@@ -2,73 +2,43 @@
   "profiles": [
     {
       "url": "https://www.linkedin.com/in/akniet-kuanish-a94365241/",
-      "status": "error",
-      "error": "Page.wait_for_selector: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\"h1\") to be visible\n"
+      "status": "new"
     },
     {
       "url": "https://www.linkedin.com/in/diana-s-5559b91a6/",
-      "status": "error",
-      "error": "Page.wait_for_selector: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\"h1\") to be visible\n"
+      "status": "new"
     },
     {
       "url": "https://www.linkedin.com/in/amina-yeszhanova-4829a1320/",
-      "status": "error",
-      "error": "Page.wait_for_selector: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\"h1\") to be visible\n"
+      "status": "new"
     },
     {
       "url": "https://www.linkedin.com/in/alisher-abdikhaniyev/",
-      "status": "error",
-      "error": "Page.wait_for_selector: Timeout 15000ms exceeded.\nCall log:\n  - waiting for locator(\"h1\") to be visible\n"
+      "status": "new"
     },
     {
       "url": "https://www.linkedin.com/in/agibayev-darkhan/",
-      "status": "error",
-      "error": "Page.wait_for_selector: Timeout 8000ms exceeded.\nCall log:\n  - waiting for locator(\"h1\") to be visible\n"
+      "status": "new"
     },
     {
       "url": "https://www.linkedin.com/in/berik-s-824a9128b/",
-      "status": "error",
-      "error": "Page.wait_for_selector: Timeout 8000ms exceeded.\nCall log:\n  - waiting for locator(\"h1\") to be visible\n"
+      "status": "new"
     },
     {
       "url": "https://www.linkedin.com/in/nurmukhammed/",
-      "status": "parsed",
-      "data": {
-        "url": "https://www.linkedin.com/in/nurmukhammed/",
-        "name": null,
-        "headline": null,
-        "location": null
-      }
+      "status": "new"
     },
     {
       "url": "https://www.linkedin.com/in/zhantore-bazarbayev-8ba28428b/",
-      "status": "parsed",
-      "data": {
-        "url": "https://www.linkedin.com/in/zhantore-bazarbayev-8ba28428b/",
-        "name": null,
-        "headline": null,
-        "location": null
-      }
+      "status": "new"
     },
     {
       "url": "https://www.linkedin.com/in/magzhan-turdygazin-a2863628b/",
-      "status": "parsed",
-      "data": {
-        "url": "https://www.linkedin.com/in/magzhan-turdygazin-a2863628b/",
-        "name": null,
-        "headline": null,
-        "location": null
-      }
+      "status": "new"
     },
     {
       "url": "https://www.linkedin.com/in/artyom-vukolov-615261246/",
-      "status": "parsed",
-      "data": {
-        "url": "https://www.linkedin.com/in/artyom-vukolov-615261246/",
-        "name": null,
-        "headline": null,
-        "location": null
-      }
+      "status": "new"
     },
     {
       "url": "https://www.linkedin.com/in/bekasyl-utepov/",
